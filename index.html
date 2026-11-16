@@ -1,0 +1,977 @@
+<!doctype html>
+<!--
+  RIDGELINE — an original, self-contained hill-climbing browser game.
+  Save this file as Ridgeline_Hill_Climb.html and open it in a modern browser.
+  No libraries, network requests, build step, or game assets are required.
+  Source is organized into CSS, HTML, physics, then game/rendering sections.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172d28">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="description" content="Take the scenic route. An original hill-climbing game with endless trails, a suspension-driven jeep, three landscapes, and an upgrade garage. Plays offline in one HTML file.">
+  <title>Ridgeline — Hill Climb</title>
+  <style>
+    :root{--ink:#19332c;--muted:#768279;--paper:#f7f6ee;--lime:#d7f56c;--line:#dcded3;--dark:#172d28;--orange:#ed824f;--yellow:#f4ca54;--radius:18px}
+    *{box-sizing:border-box}body{margin:0;background:#eaece3;color:var(--ink);font-family:Inter,Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}button,a,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.48}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:3px solid #eb9b3d;outline-offset:4px}button{touch-action:manipulation}button svg{width:20px;height:20px;vertical-align:middle;flex-shrink:0}svg{display:inline-block}.hidden,[hidden]{display:none!important}
+    .masthead{height:82px;padding:0 clamp(20px,4vw,64px);display:flex;align-items:center;justify-content:space-between;background:var(--paper);border-bottom:1px solid var(--line);gap:14px}.brand{display:flex;align-items:center;gap:12px}.brand-mark{width:42px;height:42px;color:var(--dark)}.brand-name{font-size:24px;line-height:1;font-weight:900;letter-spacing:-1px}.brand-sub{font-size:9px;letter-spacing:3.4px;margin-top:7px;font-weight:700;color:#6b7a6f}.header-actions{display:flex;align-items:center;gap:9px}.wallet{display:flex;gap:8px;align-items:center;margin-right:14px;font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}.coin{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:var(--yellow);border:2px solid #ce9e2f;border-radius:50%;font-size:13px;color:#927021;box-shadow:inset 0 0 0 2px #f8dc78;font-weight:900}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink);padding:10px 16px;font-weight:700;font-size:13px;transition:background .15s,transform .15s}.btn:hover{background:#e9ede1}.btn:active{transform:translateY(1px)}.icon-btn{width:44px;padding:10px}.btn-primary{background:var(--lime);border-color:var(--lime);color:#1b352a}.btn-primary:hover{background:#c7e75c}.btn-dark{background:var(--dark);border-color:var(--dark);color:var(--paper)}.btn-dark:hover{background:#294b3d}.btn-quiet{border-color:transparent}.btn-large{min-height:53px;padding:13px 22px;font-size:15px;border-radius:11px}.header-sep{height:24px;width:1px;background:var(--line);margin:0 4px}
+    main{max-width:1600px;margin:auto;padding:24px clamp(16px,3vw,48px) 22px}.section-top{display:flex;align-items:center;justify-content:space-between;margin:0 0 13px;gap:10px}.section-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:9px}.status-dot{width:6px;height:6px;border-radius:50%;background:#5d8b63;box-shadow:0 0 0 3px #dce4d5}.personal-best{font-size:12px;color:#6e7c70;display:flex;align-items:center;gap:6px}.personal-best strong{color:var(--ink);font-variant-numeric:tabular-nums}.personal-best svg{width:15px;height:15px}
+    .stage{position:relative;height:clamp(420px,57vh,660px);min-height:420px;background:#dce9d9;overflow:hidden;border-radius:var(--radius);box-shadow:0 3px 0 #cfd6c9;isolation:isolate;touch-action:none}.stage canvas{width:100%;height:100%;display:block;outline-offset:-4px}.stage:fullscreen{width:100vw;height:100vh;border-radius:0}.hud{position:absolute;inset:23px 24px auto;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;pointer-events:none}.location-pill{display:inline-flex;align-items:center;gap:9px;color:#274a3c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;background:#f7f7e8bc;border:1px solid #ffffff70;border-radius:40px;padding:10px 14px;backdrop-filter:blur(12px)}.location-pill svg{width:14px;height:14px}.hud-stats{display:flex;align-items:center;gap:22px;padding:13px 20px;background:#f8f7edeb;border:1px solid #ffffff70;border-radius:12px;box-shadow:0 5px 18px #31493108;backdrop-filter:blur(12px)}.hud-stat small{font-size:8px;letter-spacing:1.7px;font-weight:800;display:block;color:#7a8775;margin-bottom:5px}.hud-stat strong{font-size:23px;letter-spacing:-.7px;font-variant-numeric:tabular-nums;line-height:1}.hud-stat strong span{font-size:11px;color:#738373;margin-left:3px;letter-spacing:0}.hud-divider{height:29px;width:1px;background:#d8ded0}.fuel-stat{width:95px}.fuel-label{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:#687c6b;margin-bottom:9px}.fuel-label strong{font-size:10px;letter-spacing:0;color:var(--ink)}.fuel-track{height:7px;width:100%;border-radius:8px;background:#dbe3cf;overflow:hidden}.fuel-fill{height:100%;background:#5c8d58;transform-origin:left;transition:background .3s;border-radius:8px}.fuel-fill.low{background:#d66d48}.hud-pause{pointer-events:auto;margin-left:0;background:#f8f7edeb;border-color:#ffffff70}.run-tools{display:flex;align-items:center;gap:8px}.hud:not(.playing) #pauseBtn{display:none}.speed{position:absolute;bottom:25px;left:25px;display:flex;align-items:baseline;gap:7px;pointer-events:none;color:#fff9e9;text-shadow:0 1px 4px #0b282d33}.speed strong{font-size:38px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-2px}.speed span{font-size:9px;letter-spacing:1.5px;font-weight:800}.milestone{position:absolute;left:50%;top:105px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0;transition:opacity .2s,top .2s;background:#203b30de;border:1px solid #d8ef8270;color:#e5f5c5;padding:10px 19px;border-radius:10px;font-size:13px;font-weight:800;white-space:nowrap}.milestone.show{opacity:1;top:115px}.milestone small{display:block;color:#c9d9b6;font-weight:500;font-size:10px;margin-top:3px}.trail-progress{position:absolute;bottom:0;left:0;right:0;height:4px;background:#172e272b}.trail-progress i{display:block;height:100%;background:var(--lime);width:0;box-shadow:0 0 14px #d7f56c90}
+    .start-screen{position:absolute;inset:0;display:flex;align-items:center;pointer-events:none;padding:72px 5% 28px}.intro{width:430px;pointer-events:auto}.eyebrow{display:flex;align-items:center;gap:9px;text-transform:uppercase;font-size:9px;font-weight:800;letter-spacing:2.2px;color:#456b52;margin-bottom:17px}.eyebrow:before{content:"";width:23px;height:1px;background:currentColor}.intro h1{font-size:clamp(46px,5.25vw,76px);font-weight:900;line-height:.98;letter-spacing:-4px;margin:0 0 17px;max-width:450px}.intro h1 em{font-family:Georgia,serif;font-weight:400;letter-spacing:-3px}.intro p{font-size:13px;color:#4b6553;line-height:1.65;max-width:280px;margin:0 0 22px}.start-actions{display:flex;align-items:center;gap:8px}.key-hint{font-size:10px;display:flex;align-items:center;gap:6px;color:#52705a;margin-top:16px}.key{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;background:#ffffff60;border:1px solid #96ad8f66;box-shadow:0 2px 0 #6b86631b;border-radius:4px;font:700 10px Arial,sans-serif}.scene-caption{position:absolute;right:28px;bottom:27px;text-align:right;color:#f7f6e9;pointer-events:none}.scene-caption b{display:block;font-size:10px;font-weight:800;letter-spacing:2px}.scene-caption span{display:block;font-size:9px;opacity:.7;margin-top:6px;letter-spacing:.6px}
+    .driving-controls{position:absolute;inset:auto 24px 22px;display:flex;justify-content:space-between;pointer-events:none;align-items:flex-end}.pedal{position:relative;width:100px;height:73px;border-radius:12px;background:#20352bd9;border:1px solid #effbd45c;color:#f5f7df;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 5px 0 #10231ed9;backdrop-filter:blur(8px)}.pedal.gas{background:#dcf58edf;border-color:#f0ffd3;color:#263d2b;box-shadow:0 5px 0 #638247}.pedal.active{transform:translateY(3px);box-shadow:0 2px 0 #10231ed9}.pedal-icon{display:flex;gap:5px;transform:skew(-10deg);height:20px}.pedal-icon i{display:block;height:20px;width:4px;background:currentColor;border-radius:3px;opacity:.65}.pedal b{font-size:9px;font-weight:800;letter-spacing:1.5px}.pedal small{position:absolute;right:7px;top:7px;font-size:9px;opacity:.45}.driving-controls+.speed{left:145px;bottom:25px}.controls-bar{display:flex;justify-content:space-between;align-items:center;padding:15px 2px 20px;font-size:11px;color:#7b867b;gap:15px}.keyboard-guide{display:flex;align-items:center;gap:19px}.control-guide{display:flex;align-items:center;gap:6px}.control-guide .key{background:#f7f6ed;border-color:#c8d1c0;color:#5d705b}.tip{font-size:10px;color:#7b867b;text-align:right}.tip strong{color:#51684e;font-weight:600}.mobile-tip{display:none}
+    .trail-section{display:grid;grid-template-columns:155px 1fr;gap:22px;align-items:center;border-top:1px solid #d3dacd;padding-top:19px}.trail-heading h2{font-size:16px;letter-spacing:-.4px;margin:0 0 6px}.trail-heading p{font-size:11px;line-height:1.5;color:#7a877a;margin:0}.trail-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.trail-card{display:flex;align-items:center;text-align:left;gap:12px;padding:13px 14px;background:#f3f4eb;border:1px solid #d4dcca;border-radius:11px;color:var(--ink);min-height:78px;transition:background .2s,border .2s;position:relative}.trail-card:hover{background:#f9faef}.trail-card[aria-pressed="true"]{border:1.5px solid #658054;background:#fafbf0;padding:12.5px 13.5px}.trail-thumb{position:relative;width:53px;height:45px;border-radius:7px;overflow:hidden;background:#dbead9;flex-shrink:0}.trail-thumb svg{width:100%;height:100%}.trail-copy{flex:1}.trail-copy b{display:block;font-size:12px;margin-bottom:5px}.trail-copy small{display:block;font-size:9px;color:#7a8876;letter-spacing:.15px}.selected-mark{width:17px;height:17px;background:#567849;border-radius:50%;color:white;display:none;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}.trail-card[aria-pressed="true"] .selected-mark{display:flex}.trail-card:disabled{opacity:.65}.footer{display:flex;justify-content:space-between;align-items:center;margin-top:21px;font-size:9px;letter-spacing:.5px;color:#85917f}.footer-brand{font-weight:800;font-size:10px;letter-spacing:1.6px}.text-link{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:4px 0;font-size:10px;color:#5c7459;text-decoration:none}.text-link:hover{text-decoration:underline}.text-link svg{width:13px;height:13px}
+    .overlay-panel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#132c2559;backdrop-filter:blur(5px);z-index:12;padding:20px}.result-card{background:var(--paper);width:380px;max-width:100%;padding:29px;border:1px solid #fff8;border-radius:18px;box-shadow:0 20px 80px #0a201950;text-align:center}.result-icon{width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;background:#e7eddb}.result-icon svg{width:24px;height:24px}.result-card .eyebrow{justify-content:center;margin-bottom:10px}.result-card .eyebrow:before{display:none}.result-card h2{font-size:31px;letter-spacing:-1.3px;margin:0 0 8px;font-weight:900}.result-card p{font-size:12px;color:#74816e;line-height:1.6;margin:0 0 18px}.result-numbers{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:19px 0}.result-numbers div{border:1px solid #dce1d1;background:#eff2e6;border-radius:9px;padding:14px 7px}.result-numbers strong{display:block;font-size:28px;letter-spacing:-1px}.result-numbers span{display:block;font-size:9px;color:#7c8973;letter-spacing:1px;margin-top:5px;text-transform:uppercase}.result-actions{display:flex;gap:9px}.result-actions .btn{flex:1}.record-badge{display:inline-block;margin:0 0 2px;padding:5px 10px;border-radius:5px;color:#618332;background:#e1ecbd;font-size:9px;font-weight:800;letter-spacing:1px}.pause-choices{display:flex;flex-direction:column;gap:9px;margin-top:21px}
+    dialog{border:1px solid #e7eadb;border-radius:20px;padding:0;background:var(--paper);color:var(--ink);width:min(740px,calc(100% - 28px));max-height:calc(100dvh - 32px);box-shadow:0 20px 100px #091e2960;overflow:auto}dialog::backdrop{background:#132b246a;backdrop-filter:blur(5px)}.dialog-header{display:flex;align-items:flex-start;justify-content:space-between;padding:27px 28px 0;gap:16px}.dialog-header h2{font-size:27px;letter-spacing:-1.1px;margin:0 0 6px}.dialog-header p{font-size:12px;color:#7b8774;margin:0;line-height:1.5}.dialog-body{padding:22px 28px 28px}.garage-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#e8ecdd;border:1px solid #d9dfcb;border-radius:12px;padding:16px 21px;margin-bottom:18px}.garage-banner .wallet{margin:0}.garage-banner small{font-size:9px;letter-spacing:1.2px;color:#7a886b;font-weight:800;display:block;margin-bottom:7px}.paint-options{display:flex;align-items:center;gap:7px}.paint-swatch{width:27px;height:27px;border-radius:50%;border:3px solid #e8ecdd;box-shadow:0 0 0 1px #c7d1bd;padding:0}.paint-swatch[aria-pressed="true"]{box-shadow:0 0 0 2px #294833}.upgrade-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.upgrade-card{padding:18px;border:1px solid #d6decb;border-radius:12px;background:#fbfbf3}.upgrade-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.upgrade-top b{font-size:14px}.upgrade-top svg{width:20px;height:20px;color:#718664}.upgrade-card p{font-size:11px;color:#7c8976;line-height:1.6;min-height:34px;margin:0 0 13px}.level-bars{display:flex;gap:4px;margin-bottom:15px}.level-bars i{height:4px;flex:1;background:#e4e8da;border-radius:4px}.level-bars i.filled{background:#82a259}.upgrade-card .btn{width:100%;justify-content:space-between;font-size:11px;min-height:38px;padding:8px 10px}.upgrade-card .level-label{font-size:9px;color:#7c8976;display:block;margin-top:8px;text-align:right}.garage-note{font-size:10px;line-height:1.6;color:#7e8b75;margin:16px 0 0;text-align:center}.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.help-item{border:1px solid #dbe2cf;background:#f1f3e7;border-radius:11px;padding:17px}.help-item h3{font-size:13px;margin:0 0 9px}.help-item p{font-size:12px;color:#73836a;line-height:1.7;margin:0}.help-item .key{background:#fff8;margin-bottom:7px}.help-intro{font-size:13px;line-height:1.7;color:#6d7e65;margin:0 0 18px}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);border:1px solid #496c4b;background:#193a2e;color:#f1f6e0;padding:12px 19px;box-shadow:0 7px 28px #10231b2b;font-size:12px;font-weight:600;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:100;max-width:90vw;text-align:center}.toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    .intro .key-hint{width:max-content;background:#e9efd0d9;padding:5px 8px;border-radius:5px;color:#4c6851}.intro .key-hint .key{background:#f9fae9;border-color:#b5c5a7}
+    @media(min-width:1600px){.intro h1{font-size:80px}}
+    @media(max-width:1000px){.trail-section{grid-template-columns:1fr;gap:13px}.trail-heading{display:flex;gap:15px;align-items:baseline}.trail-heading p{font-size:10px}.intro{width:370px}.intro h1{font-size:60px}.keyboard-guide{gap:10px}.tip{font-size:9px}.trail-card{padding:11px;gap:8px}.trail-card[aria-pressed="true"]{padding:10.5px}.trail-thumb{width:43px}.masthead{height:72px}.stage{height:56vh;min-height:420px}}
+    @media(max-width:700px){.masthead{height:66px;padding:0 17px;gap:5px}.brand{gap:7px}.brand-mark{width:32px;height:32px}.brand-name{font-size:19px}.brand-sub{font-size:7px;letter-spacing:2.9px;margin-top:5px}.header-actions{gap:5px}.header-actions .btn{min-height:36px;height:36px;padding:7px 10px}.header-actions .icon-btn{width:36px;padding:7px}.header-actions .btn svg{width:17px;height:17px}.wallet{font-size:14px;gap:5px;margin-right:5px}.coin{width:19px;height:19px;font-size:10px}.header-sep{display:none}#garageBtn span{display:none}.section-top{margin-bottom:10px}.section-label{font-size:8px;letter-spacing:1.2px}.personal-best{font-size:10px}main{padding:16px 12px}.stage{height:57vh;min-height:425px;border-radius:13px}.hud{inset:14px 14px auto;gap:8px}.location-pill{padding:7px 9px;font-size:8px;gap:6px;letter-spacing:.8px}.location-pill svg{width:11px;height:11px}.hud-stats{gap:11px;padding:10px 12px;border-radius:9px}.hud-stat strong{font-size:20px}.hud-stat small{font-size:7px;letter-spacing:1px}.hud-divider{height:24px}.fuel-stat{width:64px}.fuel-label{font-size:7px;margin-bottom:8px}.fuel-label strong{font-size:9px}.hud-pause{height:36px;min-height:36px;width:36px;padding:8px}.hud-stat.run-coins{display:none}.hud-divider.coin-divider{display:none}.run-tools{gap:6px}.start-screen{padding:67px 7% 80px;align-items:flex-start}.intro{width:100%}.intro h1{font-size:55px;line-height:.98;letter-spacing:-3.4px;margin-bottom:13px}.intro h1 em{letter-spacing:-3px}.intro .eyebrow{font-size:8px;margin-bottom:12px;letter-spacing:1.7px}.intro p{font-size:11px;line-height:1.5;margin-bottom:16px;max-width:225px}.intro .btn-large{min-height:45px;padding:10px 17px;font-size:12px}.key-hint{font-size:9px;margin-top:12px}.scene-caption{bottom:20px;right:17px}.scene-caption b{font-size:8px}.scene-caption span{font-size:8px}.driving-controls{inset:auto 16px 20px}.pedal{width:84px;height:70px}.driving-controls+.speed{bottom:24px;left:117px}.speed strong{font-size:30px}.speed span{font-size:8px}.controls-bar{padding:13px 2px 15px;justify-content:center}.keyboard-guide{display:none}.desktop-tip{display:none}.mobile-tip{display:block;font-size:10px;color:#6e7f65;text-align:center}.trail-section{padding-top:15px;gap:11px}.trail-heading h2{font-size:14px}.trail-heading p{font-size:10px}.trail-list{gap:7px}.trail-card{flex-direction:column;align-items:flex-start;gap:9px;padding:10px;min-height:111px}.trail-card[aria-pressed="true"]{padding:9.5px}.trail-thumb{width:100%;height:37px}.trail-copy b{font-size:10px;margin-bottom:4px}.trail-copy small{font-size:8px}.selected-mark{position:absolute;top:12px;right:12px;width:14px;height:14px;font-size:8px}.footer{margin-top:17px;gap:10px}.footer-brand{font-size:8px;letter-spacing:1px}.footer .offline-label{display:none}.text-link{font-size:9px}.dialog-header{padding:23px 20px 0}.dialog-header h2{font-size:24px}.dialog-body{padding:18px 20px 23px}.upgrade-grid{gap:9px}.upgrade-card{padding:13px}.upgrade-card p{font-size:10px;min-height:48px}.upgrade-card .btn{font-size:10px;gap:3px}.upgrade-top b{font-size:12px}.garage-banner{padding:13px}.result-card{padding:25px}.result-card h2{font-size:28px}.help-grid{grid-template-columns:1fr}.milestone{top:85px;font-size:11px}.milestone.show{top:95px}}
+    @media(max-height:580px) and (orientation:landscape){.masthead{height:53px}.stage{height:calc(100dvh - 105px);min-height:250px}.section-top,.trail-section,.controls-bar,.footer{display:none}main{padding-top:12px}.intro h1{font-size:43px}.intro p{display:none}.start-screen{padding-top:55px}.intro .eyebrow{margin-bottom:8px}.key-hint{display:none}.stage .hud{inset:12px 16px auto}.hud-stats{padding:9px 13px}.pedal{height:57px;width:80px}.driving-controls{bottom:16px}.scene-caption{bottom:20px}.result-card{padding:18px;width:410px}.result-icon{display:none}.result-card h2{font-size:25px}.result-card p{margin-bottom:8px}.result-numbers{margin:12px 0}.result-numbers div{padding:9px}.result-card .eyebrow{margin-bottom:5px}.pause-choices{margin-top:12px;flex-direction:row}.pause-choices .btn{flex:1;font-size:11px}.milestone.show{top:85px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="i-mountain" viewBox="0 0 32 32"><path d="M3 25 12 9l5 9 4-6 8 13H3Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="m8 16 4 2 3-3M19 16l2 2 2-2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 29h24" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-tools" viewBox="0 0 24 24"><path d="m14 5 3 3 4-4a6 6 0 0 1-8 8l-8 8a2.1 2.1 0 0 1-3-3l8-8a6 6 0 0 1 8-8l-4 4Z" transform="translate(1 1) scale(.9)" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="m11 4-5 4H3v8h3l5 4V4ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-muted" viewBox="0 0 24 24"><path d="m11 4-5 4H3v8h3l5 4V4Zm5 5 6 6m0-6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8V4Z" fill="currentColor"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 3h10v6a5 5 0 0 1-10 0V3Zm0 2H3v2a5 5 0 0 0 5 5m9-7h4v2a5 5 0 0 1-5 5m-4 2v6m-4 1h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 9a8 8 0 1 1 0 7m0-13v6h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m6 5 3 3m6 8 3 3m-2-10 3-3M5 18l3-3" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-engine" viewBox="0 0 24 24"><path d="M4 8h4l2-3h7v4h4v9H6l-2-4V8ZM11 2h5M2 9v6m20-5v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-spring" viewBox="0 0 24 24"><path d="M12 2v3l-5 2 10 3-10 3 10 3-5 3v3M7 2h10M7 22h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-fuel" viewBox="0 0 24 24"><path d="M3 21V3h11v18M2 21h14M5 6h7v5H5V6Zm9 5h3v6a2 2 0 0 0 4 0V7l-3-3m0 2v4h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9 9a3 3 0 1 1 4 3l-1 1v1m0 3v.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </defs></svg>
+  <header class="masthead">
+    <div class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#i-mountain"/></svg><div><div class="brand-name">RIDGELINE</div><div class="brand-sub">HILL CLIMB CLUB</div></div></div>
+    <div class="header-actions"><div class="wallet" title="Your saved coins"><span class="coin" aria-hidden="true">C</span><span id="wallet">0</span><span class="sr-only">saved coins</span></div><button id="garageBtn" class="btn" aria-label="Open garage and upgrades"><svg aria-hidden="true"><use href="#i-tools"/></svg><span>Garage</span></button><span class="header-sep"></span><button id="soundBtn" class="btn icon-btn" aria-label="Turn sound on" aria-pressed="false" title="Toggle sound (M)"><svg aria-hidden="true"><use id="soundIcon" href="#i-muted"/></svg></button><button id="fullscreenBtn" class="btn icon-btn" aria-label="Enter fullscreen" title="Fullscreen"><svg aria-hidden="true"><use href="#i-expand"/></svg></button></div>
+  </header>
+  <main>
+    <div class="section-top"><div class="section-label"><span class="status-dot"></span>Good days start off-road</div><div class="personal-best"><svg aria-hidden="true"><use href="#i-trophy"/></svg>Personal best <strong id="bestDistance">0 m</strong></div></div>
+    <section class="stage" id="stage" aria-label="Ridgeline hill climb game">
+      <canvas id="game" tabindex="0" aria-label="Hill climbing game. Use Right arrow or D to accelerate, Left arrow or A to brake and reverse. P to pause. Instructions are available below.">Your browser needs HTML Canvas to play Ridgeline. Please use a current browser.</canvas>
+      <div class="hud" id="hud"><div class="location-pill"><svg aria-hidden="true"><use href="#i-mountain"/></svg><span id="trailName">Pine Valley</span></div><div class="run-tools"><div class="hud-stats"><div class="hud-stat"><small>DISTANCE</small><strong id="distance">0<span>m</span></strong></div><div class="hud-divider"></div><div class="fuel-stat"><div class="fuel-label">FUEL <strong id="fuelText">100%</strong></div><div class="fuel-track" role="progressbar" aria-label="Fuel remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="fuelBar"><div class="fuel-fill" id="fuelFill" style="transform:scaleX(1)"></div></div></div><div class="hud-divider coin-divider"></div><div class="hud-stat run-coins"><small>COINS</small><strong id="runCoins">0</strong></div></div><button id="pauseBtn" class="btn icon-btn hud-pause" aria-label="Pause game" title="Pause (P)"><svg aria-hidden="true"><use href="#i-pause"/></svg></button></div></div>
+      <div class="start-screen" id="startScreen"><div class="intro"><div class="eyebrow">Fresh air. Full throttle.</div><h1>One more<br><em>hill.</em></h1><p>Chase the horizon. Find your balance.<br>See how far a full tank takes you.</p><div class="start-actions"><button class="btn btn-primary btn-large" id="startBtn">Let’s ride <svg aria-hidden="true"><use href="#i-arrow"/></svg></button><button class="btn icon-btn" id="helpBtn" aria-label="How to play" title="How to play"><svg aria-hidden="true"><use href="#i-help"/></svg></button></div><div class="key-hint"><span class="key">↵</span>Press Enter to hit the trail</div></div></div>
+      <div class="scene-caption" id="sceneCaption"><b>TAKE THE SCENIC ROUTE</b><span>Endless hills. Endless possibilities.</span></div>
+      <div class="driving-controls hidden" id="drivingControls"><button id="brakePedal" class="pedal" aria-label="Hold to brake, reverse, or tilt nose down" aria-pressed="false"><small>A / ←</small><span class="pedal-icon" aria-hidden="true"><i></i><i></i><i></i></span><b>BRAKE</b></button><button id="gasPedal" class="pedal gas" aria-label="Hold to accelerate or tilt nose up" aria-pressed="false"><small>D / →</small><span class="pedal-icon" aria-hidden="true"><i></i><i></i><i></i></span><b>GAS</b></button></div>
+      <div class="speed hidden" id="speed"><strong id="speedNumber">0</strong><span>KM/H</span></div>
+      <div class="milestone" id="milestone" role="status"></div>
+      <div class="trail-progress" aria-hidden="true"><i id="progressFill"></i></div>
+      <div class="overlay-panel hidden" id="pauseScreen"><div class="result-card" role="dialog" aria-modal="true" aria-labelledby="pauseTitle" tabindex="-1"><div class="result-icon"><svg aria-hidden="true"><use href="#i-pause"/></svg></div><div class="eyebrow">Enjoy the view</div><h2 id="pauseTitle">Take a breather.</h2><p>Your adventure is right where you left it.</p><div class="pause-choices"><button id="resumeBtn" class="btn btn-dark">Keep riding <svg aria-hidden="true"><use href="#i-play"/></svg></button><button id="pauseRestartBtn" class="btn"><svg aria-hidden="true"><use href="#i-reset"/></svg>Restart run</button><button id="pauseHomeBtn" class="btn btn-quiet">Back to trails</button></div></div></div>
+      <div class="overlay-panel hidden" id="resultScreen"><div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle" tabindex="-1"><div class="eyebrow" id="resultEyebrow">That was a good run</div><h2 id="resultTitle">A little too much tilt.</h2><p id="resultSubtitle">Keep your wheels under you. The next ridge is waiting.</p><div class="record-badge hidden" id="newRecord">NEW PERSONAL BEST</div><div class="result-numbers"><div><strong id="resultDistance">0 m</strong><span>Distance traveled</span></div><div><strong id="resultCoins">+0</strong><span>Coins banked</span></div></div><div class="result-actions"><button id="resultHomeBtn" class="btn">Trails</button><button id="retryBtn" class="btn btn-dark">Ride again <svg aria-hidden="true"><use href="#i-arrow"/></svg></button></div><button id="resultGarageBtn" class="btn btn-quiet" style="margin-top:8px;font-size:11px"><svg aria-hidden="true"><use href="#i-tools"/></svg>Put those coins to work</button></div></div>
+    </section>
+    <div class="controls-bar"><div class="keyboard-guide"><div class="control-guide"><span class="key">D</span><span class="key">→</span>Gas / tilt back</div><div class="control-guide"><span class="key">A</span><span class="key">←</span>Brake / tilt forward</div><div class="control-guide"><span class="key">P</span>Pause</div><div class="control-guide"><span class="key">R</span>Restart</div></div><div class="tip desktop-tip"><strong>Easy on the gas.</strong> A smooth landing goes a long way.</div><div class="mobile-tip">Hold the pedals to drive. Balance your jeep in the air.</div></div>
+    <section class="trail-section" aria-labelledby="trailsTitle"><div class="trail-heading"><h2 id="trailsTitle">Find your trail.</h2><p>Same spirit. New scenery.</p></div><div class="trail-list">
+      <button class="trail-card" data-trail="pine" aria-pressed="true"><span class="trail-thumb"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="80" height="50" fill="#cbded2"/><circle cx="60" cy="13" r="7" fill="#fbf4ce"/><path d="M0 32 23 9l23 28L65 19l20 17v20H0Z" fill="#90b9a3"/><path d="M0 36Q20 20 40 38T85 30V50H0Z" fill="#568666"/><path d="m17 40 8-18 8 18M4 46l9-19 9 19m35-4 7-19 8 19" fill="#2d5c46"/></svg></span><span class="trail-copy"><b>Pine Valley</b><small>Rolling hills · Easygoing</small></span><span class="selected-mark">✓</span></button>
+      <button class="trail-card" data-trail="canyon" aria-pressed="false"><span class="trail-thumb"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="80" height="50" fill="#f1dfb9"/><circle cx="59" cy="14" r="8" fill="#fff1bc"/><path d="M0 34 10 30 15 15h18l5 20h13l5-13h19l9 22v6H0Z" fill="#d59e79"/><path d="M0 39Q30 22 50 40T90 36V50H0Z" fill="#a76d4e"/><path d="M17 45V27m0 11h-5v-7m5 10h6V31" fill="none" stroke="#6c7e52" stroke-width="3" stroke-linecap="round"/></svg></span><span class="trail-copy"><b>Rust Canyon</b><small>Bigger climbs · Adventurous</small></span><span class="selected-mark">✓</span></button>
+      <button class="trail-card" data-trail="alpine" aria-pressed="false"><span class="trail-thumb"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="80" height="50" fill="#bccedb"/><circle cx="62" cy="13" r="7" fill="#f0f3df"/><path d="M0 39 29 7l29 31L73 19l15 24v8H0Z" fill="#7e9eae"/><path d="m18 19 11-12 11 12-8-2-3 5-4-6Z" fill="#eef3ec"/><path d="M0 41Q20 24 44 40T90 38v12H0Z" fill="#54798b"/><path d="m13 48 7-18 8 18m35-3 6-17 7 17" fill="#2d536b"/></svg></span><span class="trail-copy"><b>Alpine Dusk</b><small>Light gravity · Floaty jumps</small></span><span class="selected-mark">✓</span></button>
+    </div></section>
+    <footer class="footer"><span class="footer-brand">BUILT FOR THE LONG WAY HOME.</span><span class="offline-label">No finish line. Just one more hill.</span><a id="downloadLink" class="text-link" href="Ridgeline_Hill_Climb.html" download="Ridgeline_Hill_Climb.html"><svg aria-hidden="true"><use href="#i-download"/></svg>Download game + source</a></footer>
+  </main>
+  <dialog id="garageDialog" aria-labelledby="garageTitle"><div class="dialog-header"><div><h2 id="garageTitle">A little garage magic.</h2><p>Earn coins on the trail. Build your perfect ride.</p></div><button class="btn icon-btn" data-close="garageDialog" aria-label="Close garage"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div><div class="dialog-body"><div class="garage-banner"><div><small>YOUR COIN STASH</small><div class="wallet"><span class="coin" aria-hidden="true">C</span><span id="garageWallet">0</span></div></div><div><small>MAKE IT YOURS</small><div class="paint-options" id="paintOptions"></div></div></div><div class="upgrade-grid" id="upgradeGrid"></div><p class="garage-note">Upgrades take effect on your next run. Progress saves automatically in this browser.</p></div></dialog>
+  <dialog id="helpDialog" aria-labelledby="helpTitle"><div class="dialog-header"><div><h2 id="helpTitle">A quick trail guide.</h2><p>Two pedals. A whole lot of possibilities.</p></div><button class="btn icon-btn" data-close="helpDialog" aria-label="Close instructions"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div><div class="dialog-body"><p class="help-intro">Drive as far as you can without landing on your roof or running out of fuel. Collect coins, upgrade your jeep, and come back for one more hill.</p><div class="help-grid"><div class="help-item"><h3>01 / Find your rhythm</h3><span class="key">D / →</span> <span class="key">A / ←</span><p>Right or D accelerates. Left or A brakes, then reverses. On a phone, hold the onscreen pedals. Both pedals together give a stronger brake.</p></div><div class="help-item"><h3>02 / Stick the landing</h3><p>In the air, gas lifts the nose and brake lowers it. Ease off before a crest and line up your wheels with the landing. Long jumps and full flips earn bonus coins.</p></div><div class="help-item"><h3>03 / Keep the tank happy</h3><p>Red fuel cans refill your tank. Gold coins are worth 5 each. Every 100 meters earns a distance bonus. An empty tank lets you coast briefly to a final refill.</p></div><div class="help-item"><h3>04 / Make it a habit</h3><p>P or Escape pauses, R restarts, and M toggles sound. Your best distance and coins save between runs. Banked coins buy engine, tire, suspension, and fuel upgrades.</p></div></div></div></dialog>
+  <div class="toast" id="toast" role="status"></div><div class="sr-only" id="announcer" aria-live="polite"></div>
+  <script>
+/*
+ * RIDGELINE — dependency-free arcade vehicle physics.
+ * World coordinates: +x right, +y up; positive angle lifts the nose.
+ * Units are pixels and seconds. Integrate at 120 Hz for consistent handling.
+ */
+(function (root) {
+  'use strict';
+  const RADIUS = 19;
+  const AXLE = 43;
+  const AXLE_Y = -12;
+  const MASS = 1;
+  const INERTIA = 1450;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const level = v => clamp(Number.isFinite(v) ? v : 0, 0, 5);
+
+  function surface(terrain, x) {
+    const y = terrain(x);
+    const slope = (terrain(x + 2) - terrain(x - 2)) / 4;
+    const inv = 1 / Math.sqrt(1 + slope * slope);
+    return { y, nx: -slope * inv, ny: inv, tx: inv, ty: slope * inv };
+  }
+
+  function axlePoint(car, side) {
+    const c = Math.cos(car.angle), s = Math.sin(car.angle);
+    return { rx: side * AXLE * c - AXLE_Y * s,
+             ry: side * AXLE * s + AXLE_Y * c };
+  }
+
+  function updateWheels(car, terrain) {
+    car.wheels = [-1, 1].map(side => {
+      const p = axlePoint(car, side);
+      const x = car.x + p.rx, y = car.y + p.ry;
+      const g = surface(terrain, x);
+      const penetration = Math.max(0, RADIUS - (y - g.y) * g.ny);
+      // The rigid-body spring rest position may penetrate the road. The
+      // visible wheel travels up the spring, keeping its tire on the road.
+      const compression = Math.min(penetration, 15);
+      return { x: x + g.nx * compression, y: y + g.ny * compression,
+               r: RADIUS, compression, contact: penetration > 0.15 };
+    });
+  }
+
+  function createCar(terrain, options) {
+    options = options || {};
+    const car = {
+      x: 160, y: 0, vx: 0, vy: 0, angle: 0, omega: 0,
+      wheelSpin: 0, grounded: true, contacts: 2, crashed: false,
+      wheels: [], age: 0, airTime: 0, impact: 0,
+      options: { engine: level(options.engine), suspension: level(options.suspension),
+                 tires: level(options.tires), gravity: clamp(Number(options.gravity) || 1, 0.15, 2) }
+    };
+    car.angle = Math.atan2(terrain(car.x + AXLE) - terrain(car.x - AXLE), AXLE * 2);
+    let required = -Infinity;
+    for (const side of [-1, 1]) {
+      const p = axlePoint(car, side);
+      const g = surface(terrain, car.x + p.rx);
+      required = Math.max(required, g.y + RADIUS / g.ny - p.ry);
+    }
+    car.y = required - 2.1;
+    updateWheels(car, terrain);
+    return car;
+  }
+
+  function advance(car, dt, input, terrain) {
+    if (car.crashed) return;
+    const gas = clamp(Number(input.gas) || 0, 0, 1);
+    const brake = clamp(Number(input.brake) || 0, 0, 1);
+    const opt = car.options;
+    const gravity = 900 * opt.gravity;
+    const spring = 215 + opt.suspension * 24;
+    const damping = 16.5 + opt.suspension * 1.3;
+    const engine = 760 + opt.engine * 110;
+    const grip = 1.35 + opt.tires * 0.16;
+    let fx = -car.vx * 0.14, fy = -gravity * MASS;
+    let torque = -car.omega * 190;
+    let contacts = 0;
+    let peakImpact = 0;
+
+    for (const side of [-1, 1]) {
+      const p = axlePoint(car, side);
+      const x = car.x + p.rx, y = car.y + p.ry;
+      const g = surface(terrain, x);
+      const depth = RADIUS - (y - g.y) * g.ny;
+      if (depth > 0) {
+        contacts++;
+        const vx = car.vx - car.omega * p.ry;
+        const vy = car.vy + car.omega * p.rx;
+        const normalSpeed = vx * g.nx + vy * g.ny;
+        const tangentSpeed = vx * g.tx + vy * g.ty;
+        let normal = clamp(depth * spring - normalSpeed * damping, 0, 12000);
+        peakImpact = Math.max(peakImpact, Math.max(0, -normalSpeed));
+        // Both driven wheels share the available engine torque. Grip is
+        // bounded by the normal load, so airborne wheels cannot propel us.
+        let drive = gas * engine * 0.5;
+        if (brake > 0) {
+          drive -= brake * (tangentSpeed > 12 ? 1300 : tangentSpeed > -130 ? 500 : 0) * 0.5;
+        }
+        drive -= tangentSpeed * 0.52;
+        // With both pedals held, braking wins and the car stays controllable.
+        if (gas && brake) drive = -tangentSpeed * 10;
+        drive = clamp(drive, -normal * grip, normal * grip);
+        const cx = normal * g.nx + drive * g.tx;
+        const cy = normal * g.ny + drive * g.ty;
+        fx += cx; fy += cy;
+        torque += p.rx * cy - p.ry * cx;
+      }
+    }
+
+    car.contacts = contacts;
+    car.grounded = contacts > 0;
+    car.airTime = contacts ? 0 : car.airTime + dt;
+    car.impact = peakImpact;
+    if (!contacts) {
+      // Pedals become pitch controls in the air. Angular drag makes releasing
+      // the pedals useful; a deliberate held input can still perform a flip.
+      torque += (gas - brake) * INERTIA * 4.3;
+      torque -= car.omega * INERTIA * 0.32;
+    }
+
+    car.vx += fx / MASS * dt;
+    car.vy += fy / MASS * dt;
+    car.omega += torque / INERTIA * dt;
+    car.vx = clamp(car.vx, -190, 600 + opt.engine * 32);
+    car.vy = clamp(car.vy, -950, 900);
+    car.omega = clamp(car.omega, -6.5, 6.5);
+    car.x += car.vx * dt;
+    car.y += car.vy * dt;
+    car.angle += car.omega * dt;
+    car.wheelSpin += car.vx / RADIUS * dt;
+    car.age += dt;
+
+    // A last-resort tire impulse protects against tunnelling on hard
+    // landings without replacing the normal spring suspension response.
+    for (const side of [-1, 1]) {
+      const p = axlePoint(car, side);
+      const x = car.x + p.rx, y = car.y + p.ry;
+      const g = surface(terrain, x);
+      const depth = RADIUS - (y - g.y) * g.ny;
+      if (depth > 19 && Math.cos(car.angle) > 0.15) {
+        const correction = Math.min(depth - 19, 14);
+        car.x += g.nx * correction;
+        car.y += g.ny * correction;
+        const vn = car.vx * g.nx + car.vy * g.ny;
+        if (vn < -180) {
+          car.vx -= g.nx * (vn + 180) * 0.5;
+          car.vy -= g.ny * (vn + 180) * 0.5;
+        }
+      }
+    }
+
+    // Roof/driver contact ends a run. The normal chassis can scrape through
+    // a landing; a nearly inverted vehicle cannot balance on its roof.
+    // Match the cabin roof in drawCar (y=43), allowing the decorative
+    // blanket/rack to scrape without ending a run.
+    const c = Math.cos(car.angle), s = Math.sin(car.angle);
+    if (car.age > 0.2) {
+      for (const p of [[-18, 42], [13, 42], [27, 25]]) {
+        const x = car.x + p[0] * c - p[1] * s;
+        const y = car.y + p[0] * s + p[1] * c;
+        if (y < terrain(x) + 3) {
+          car.crashed = true;
+          break;
+        }
+      }
+    }
+    updateWheels(car, terrain);
+  }
+
+  function step(car, dt, input, terrain) {
+    // Defensive subdivision lets callers recover from a delayed frame.
+    // The app itself still uses a fixed-step accumulator.
+    dt = clamp(Number(dt) || 0, 0, 0.1);
+    while (dt > 1e-8) {
+      const h = Math.min(dt, 1 / 120);
+      advance(car, h, input || {}, terrain);
+      dt -= h;
+    }
+    return car;
+  }
+
+  root.RidgePhysics = Object.freeze({ createCar, step,
+    geometry: Object.freeze({ axle: AXLE, axleY: AXLE_Y, radius: RADIUS }) });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  </script>
+  <script>
+/*
+ * RIDGELINE — game, persistence, input, procedural art, and interface.
+ * All scenery is drawn with Canvas. Audio is synthesized with Web Audio.
+ * No files are fetched, so the downloadable HTML works offline.
+ */
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const canvas = $('game'), ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) { $('startBtn').textContent = 'Canvas is unavailable'; $('startBtn').disabled = true; return; }
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+  const fract = x => x - Math.floor(x);
+  const hash = n => fract(Math.sin(n * 127.1 + 311.7) * 43758.5453123);
+  const fmt = n => Math.floor(n).toLocaleString('en-US');
+  const TAU = Math.PI * 2;
+  const METERS_PER_PIXEL = 0.1;
+  const FIXED_DT = 1 / 120;
+  const STORAGE_KEY = 'ridgeline-hill-climb-v1';
+  const PAINTS = [
+    { name: 'Burnt orange', body: '#e87d4e', dark: '#a74f34', light: '#f7a270' },
+    { name: 'Forest green', body: '#5b8871', dark: '#315b4e', light: '#87ad86' },
+    { name: 'Sunflower', body: '#dbb650', dark: '#9c783a', light: '#f4d278' },
+    { name: 'Glacier blue', body: '#6299ad', dark: '#376376', light: '#93c0c7' }
+  ];
+  const TRAILS = {
+    pine: { name: 'Pine Valley', amplitude: 1, gravity: 1, offset: 0, sky: ['#c5dfd9','#e9edcb'], sun:'#faf1b9', mountain:['#b0cfc1','#88b19d','#648e79'], ground:'#546d40', dirt:'#334d36', grass:'#a7b96e', tree:'#32604a', treeLight:'#537e59', haze:'#d4e4ca' },
+    canyon: { name: 'Rust Canyon', amplitude: 1.32, gravity: 1, offset: 720, sky: ['#e8c7a7','#f6e8bd'], sun:'#fff0b5', mountain:['#d7ad8e','#bd8b6b','#a46c50'], ground:'#b17e4e', dirt:'#815b3d', grass:'#d6b476', tree:'#64764b', treeLight:'#81915e', haze:'#f0d8ad' },
+    alpine: { name: 'Alpine Dusk', amplitude: 1.12, gravity: .78, offset: 1280, sky: ['#91adbf','#d8dfd9'], sun:'#f2f0d3', mountain:['#92aeb8','#718f9f','#527184'], ground:'#6c8790', dirt:'#3c5969', grass:'#d6e1d6', tree:'#2e5666', treeLight:'#456d77', haze:'#c1d0d1' }
+  };
+  const UPGRADE_INFO = {
+    engine: { label:'Engine', icon:'engine', text:'More pulling power for steep climbs. Higher top speed.', base:100 },
+    tires: { label:'Tires', icon:'wheel', text:'More grip to put that power down on the hills.', base:90 },
+    suspension: { label:'Suspension', icon:'spring', text:'Firmer springs and better damping for rough landings.', base:80 },
+    tank: { label:'Fuel tank', icon:'fuel', text:'20% more fuel capacity with every upgrade.', base:100 }
+  };
+
+  // A defensive save parser keeps a damaged or unavailable localStorage
+  // from preventing the game from starting.
+  let storageAvailable = true;
+  function loadSave() {
+    let v = {};
+    try { v = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
+    catch (_) { storageAvailable = false; }
+    const number = (value, max) => Number.isFinite(value) ? clamp(Math.floor(value),0,max) : 0;
+    return {
+      version:1, bank:number(v.bank,1e9), best:number(v.best,1e8),
+      bestByTrail:Object.fromEntries(Object.keys(TRAILS).map(k => [k,number(v.bestByTrail?.[k],1e8)])),
+      upgrades:Object.fromEntries(Object.keys(UPGRADE_INFO).map(k => [k,number(v.upgrades?.[k],5)])),
+      paint:number(v.paint,PAINTS.length-1), sound:v.sound === true,
+      trail:Object.hasOwn(TRAILS,v.trail) ? v.trail : 'pine'
+    };
+  }
+  const save = loadSave();
+  function persist() {
+    try { localStorage.setItem(STORAGE_KEY,JSON.stringify(save)); storageAvailable = true; }
+    catch (_) { storageAvailable = false; }
+    updateWallet();
+  }
+  function updateWallet() {
+    $('wallet').textContent = fmt(save.bank);
+    $('garageWallet').textContent = fmt(save.bank);
+    $('bestDistance').textContent = fmt(save.bestByTrail[trailId] || 0) + ' m';
+  }
+
+  let trailId = save.trail, trail = TRAILS[trailId];
+  let mode = 'menu', car, run, pickups = [], particles = [], floaters = [];
+  let W = 1000, H = 500, scale = 1, dpr = 1;
+  let cam = { x:0, y:0 }, renderTime = 0, accumulator = 0, lastTime = 0;
+  let lastHud = 0, toastTimer, milestoneTimer, dialogWasRunning = false;
+  let shake = 0, lastDust = 0;
+  const heldKeys = new Set();
+  const touches = { gas:new Set(), brake:new Set() };
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Analytic, deterministic terrain: no gaps, no asset downloads, and no
+  // finite end to the road. Difficulty builds gently with distance.
+  function terrain(x) {
+    const ramp = smooth((x - 300) / 800);
+    const challenge = 1 + Math.min(Math.max(0,x - 2500) / 18000,.65);
+    const p = x + trail.offset;
+    const rolling = 67 * Math.sin((p - 500) / 247) + 25 * Math.sin((p + 100) / 111) + 36 * Math.sin((p - 900) / 463);
+    const sharper = 21 * Math.sin((p - 1600) / 139) * smooth((x - 900)/900);
+    const jumps = 82 * Math.pow(Math.max(0,Math.sin((p - 1700) / 155)),4) * smooth((x - 1200)/1000);
+    return (rolling + sharper + jumps) * ramp * trail.amplitude * challenge;
+  }
+
+  // Browser audio begins only in a user gesture. The engine hum is quiet
+  // and muted by default; every sound is synthesized, not downloaded.
+  const sound = { context:null, engine:null, gain:null, enabled:save.sound };
+  function initAudio() {
+    if (!sound.enabled) return;
+    try {
+      if (!sound.context) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        sound.context = new AudioCtx();
+        sound.engine = sound.context.createOscillator();
+        sound.gain = sound.context.createGain();
+        const filter = sound.context.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.value = 230;
+        sound.engine.type = 'sawtooth'; sound.engine.frequency.value = 35;
+        sound.gain.gain.value = 0;
+        sound.engine.connect(filter); filter.connect(sound.gain); sound.gain.connect(sound.context.destination);
+        sound.engine.start();
+      }
+      const res = sound.context.resume();
+      if (res?.catch) res.catch(() => {});
+    } catch (_) { /* Sound is optional; gameplay continues. */ }
+  }
+  function tone(frequency=650, duration=.08, type='sine', volume=.045) {
+    if (!sound.enabled || !sound.context || sound.context.state !== 'running') return;
+    const ac = sound.context, t = ac.currentTime;
+    const osc = ac.createOscillator(), gain = ac.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(frequency,t);
+    osc.frequency.exponentialRampToValueAtTime(frequency*.8,t+duration);
+    gain.gain.setValueAtTime(volume,t); gain.gain.exponentialRampToValueAtTime(.001,t+duration);
+    osc.connect(gain); gain.connect(ac.destination); osc.start(); osc.stop(t+duration+.01);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+  }
+  function updateAudio() {
+    if (!sound.context) return;
+    const t = sound.context.currentTime;
+    const active = sound.enabled && mode === 'running' && run?.fuel > 0;
+    sound.gain.gain.setTargetAtTime(active ? .014 + controls().gas*.009 : 0,t,.08);
+    sound.engine.frequency.setTargetAtTime(31 + Math.abs(car.vx)*.12 + controls().gas*9,t,.08);
+  }
+  function updateSoundButton() {
+    $('soundIcon').setAttribute('href', sound.enabled ? '#i-sound' : '#i-muted');
+    $('soundBtn').setAttribute('aria-label',sound.enabled ? 'Turn sound off' : 'Turn sound on');
+    $('soundBtn').setAttribute('aria-pressed',String(sound.enabled));
+  }
+  function toggleSound() {
+    sound.enabled = !sound.enabled; save.sound = sound.enabled;
+    initAudio(); updateSoundButton(); persist(); updateAudio();
+    if (sound.enabled) tone(520,.1);
+  }
+
+  function controls() {
+    return {
+      gas: +(heldKeys.has('ArrowRight') || heldKeys.has('KeyD') || touches.gas.size > 0),
+      brake: +(heldKeys.has('ArrowLeft') || heldKeys.has('KeyA') || touches.brake.size > 0)
+    };
+  }
+  function paintPedals() {
+    const input = controls();
+    for (const k of ['gas','brake']) {
+      $(k+'Pedal').classList.toggle('active',!!input[k]);
+      $(k+'Pedal').setAttribute('aria-pressed',String(!!input[k]));
+    }
+  }
+  function clearControls() {
+    heldKeys.clear(); touches.gas.clear(); touches.brake.clear(); paintPedals();
+  }
+  function bindPedal(id,key) {
+    const el = $(id);
+    el.addEventListener('pointerdown',e => {
+      if (mode !== 'running') return;
+      e.preventDefault(); initAudio();
+      touches[key].add(e.pointerId);
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      paintPedals();
+    });
+    const release = e => { touches[key].delete(e.pointerId); paintPedals(); };
+    for (const name of ['pointerup','pointercancel','lostpointercapture']) el.addEventListener(name,release);
+    // Keyboard activation of the visible pedals also acts as a held input.
+    el.addEventListener('keydown',e => {
+      if ((e.code === 'Space' || e.code === 'Enter') && mode === 'running') {
+        e.preventDefault(); touches[key].add('keyboard'); paintPedals();
+      }
+    });
+    el.addEventListener('keyup',e => { if(e.code === 'Space' || e.code === 'Enter') { touches[key].delete('keyboard'); paintPedals(); } });
+    el.addEventListener('blur',() => { touches[key].delete('keyboard'); paintPedals(); });
+    el.addEventListener('contextmenu',e => e.preventDefault());
+  }
+  bindPedal('gasPedal','gas'); bindPedal('brakePedal','brake');
+
+  // A run's coins settle exactly once. Restart and returning to the trails
+  // bank the current run too, so closing a menu never duplicates rewards.
+  function newRun() {
+    clearTimeout(milestoneTimer); $('milestone').classList.remove('show');
+    car = RidgePhysics.createCar(terrain,{...save.upgrades,gravity:trail.gravity});
+    run = {
+      fuel:100*(1+save.upgrades.tank*.2), maxFuel:100*(1+save.upgrades.tank*.2),
+      farthest:car.x, distance:0, coins:0, settled:false, nextCoins:0, nextFuel:1800,
+      time:0, emptyTime:0, milestone:0, airTime:0, airRotation:0, lastAngle:car.angle,
+      wasAir:false, bestBefore:save.bestByTrail[trailId]||0, earnedAir:0
+    };
+    pickups=[]; particles=[]; floaters=[]; shake=0; lastDust=0;
+    spawnPickups();
+    cam = { x:car.x - W*(mode==='menu' ? .70 : .29)/scale, y:terrain(car.x) };
+    accumulator=0; updateHUD(true);
+  }
+  function setVisible(id,visible) { $(id).classList.toggle('hidden',!visible); }
+  function setMode(next) {
+    mode = next; clearControls(); accumulator=0;
+    setVisible('startScreen',next==='menu'); setVisible('sceneCaption',next==='menu');
+    setVisible('pauseScreen',next==='paused'); setVisible('resultScreen',next==='over');
+    setVisible('drivingControls',next==='running'); setVisible('speed',next==='running');
+    $('hud').classList.toggle('playing',next==='running');
+    document.querySelectorAll('[data-trail]').forEach(b => b.disabled = next==='running' || next==='paused');
+    $('garageBtn').disabled = next==='running' || next==='paused';
+    if (next==='paused') $('resumeBtn').focus({preventScroll:true});
+    if (next==='over') $('retryBtn').focus({preventScroll:true});
+    updateAudio();
+  }
+  function startRun() {
+    if ($('garageDialog').open || $('helpDialog').open) return;
+    settleRun(); setMode('running'); newRun(); initAudio();
+    canvas.focus({preventScroll:true});
+    $('announcer').textContent='Run started in '+trail.name+'.';
+    if (!storageAvailable) toast('Progress stays in this tab while browser storage is unavailable.');
+  }
+  function settleRun() {
+    if (!run || run.settled || (mode==='menu' && run.time===0)) return;
+    run.settled=true;
+    save.bank=Math.min(1e9,save.bank+run.coins);
+    save.best=Math.max(save.best,run.distance);
+    save.bestByTrail[trailId]=Math.max(save.bestByTrail[trailId]||0,run.distance);
+    persist();
+  }
+  function goHome() {
+    settleRun(); setMode('menu'); newRun(); $('startBtn').focus({preventScroll:true});
+  }
+  function pauseGame() {
+    if (mode==='running') { setMode('paused'); $('announcer').textContent='Game paused.'; }
+  }
+  function resumeGame() {
+    if (mode!=='paused' || $('garageDialog').open || $('helpDialog').open) return;
+    setMode('running'); initAudio(); canvas.focus({preventScroll:true});
+  }
+  function finish(reason) {
+    if (mode!=='running') return;
+    settleRun(); setMode('over');
+    $('resultTitle').textContent=reason==='fuel' ? 'Running on empty.' : 'A little too much tilt.';
+    $('resultSubtitle').textContent=reason==='fuel' ? 'Look for the red fuel cans. A bigger tank helps, too.' : 'Keep your wheels under you. The next ridge is waiting.';
+    $('resultDistance').textContent=fmt(run.distance)+' m';
+    $('resultCoins').textContent='+'+fmt(run.coins);
+    setVisible('newRecord',run.distance>run.bestBefore && run.distance>0);
+    $('resultEyebrow').textContent=run.distance>run.bestBefore ? 'Your best adventure yet' : 'There’s always another hill';
+    $('announcer').textContent=`Run complete. ${run.distance} meters. ${run.coins} coins banked.`;
+    tone(reason==='fuel'?180:110,.25,'triangle',.08);
+  }
+
+  function spawnPickups() {
+    const horizon = car.x + W/scale + 900;
+    while (450+run.nextCoins*390 < horizon) {
+      const group=run.nextCoins++;
+      for(let j=0;j<5;j++) {
+        const x=450+group*390+j*38;
+        pickups.push({kind:'coin',x,y:terrain(x)+53+Math.sin(j/4*Math.PI)*19,taken:false,seed:group*7+j});
+      }
+    }
+    while(run.nextFuel<horizon) {
+      const x=run.nextFuel;
+      pickups.push({kind:'fuel',x,y:terrain(x)+58,taken:false,seed:x});
+      run.nextFuel+=Math.min(4000,2600+Math.floor(run.nextFuel/5000)*180);
+    }
+    // Never regenerate discarded pickups when reversing: the generation
+    // counters only advance. Keeping a long tail also makes reversals fair.
+    if(pickups.length>180) pickups=pickups.filter(p=>p.x>car.x-3000);
+  }
+  function addFloater(text,x,y,color='#fff5cd') {
+    floaters.push({text,x,y,life:1.2,maxLife:1.2,color});
+  }
+  function burst(x,y,color,count=9) {
+    for(let i=0;i<count;i++) {
+      const a=hash(i+renderTime*13)*TAU, speed=30+hash(i+72)*90;
+      particles.push({x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed+55,life:.5+hash(i+3)*.35,maxLife:.85,size:2+hash(i+7)*3,color,gravity:180});
+    }
+  }
+  function flashMilestone(title,subtitle='') {
+    const box=$('milestone'); box.replaceChildren(document.createTextNode(title));
+    if(subtitle){const small=document.createElement('small');small.textContent=subtitle;box.appendChild(small);}
+    box.classList.add('show'); clearTimeout(milestoneTimer);
+    milestoneTimer=setTimeout(()=>box.classList.remove('show'),2400);
+  }
+  function update(dt) {
+    if(mode!=='running')return;
+    const input=controls();
+    const drive={gas:run.fuel>0?input.gas:0,brake:input.brake};
+    RidgePhysics.step(car,dt,drive,terrain);
+    run.time+=dt;
+    run.farthest=Math.max(run.farthest,car.x);
+    run.distance=Math.max(0,Math.floor((run.farthest-160)*METERS_PER_PIXEL));
+    run.fuel=Math.max(0,run.fuel-dt*(2.3+drive.gas*2.4));
+    if(car.x<78){car.x=78;car.vx=Math.max(0,car.vx);}
+    spawnPickups();
+    for(const p of pickups) {
+      if(p.taken || Math.abs(p.x-car.x)>85)continue;
+      if(Math.hypot((p.x-car.x)*.8,p.y-(car.y+7))<(p.kind==='coin'?61:69)) {
+        p.taken=true;
+        if(p.kind==='coin') { run.coins+=5; tone(720+(p.seed%5)*70,.06,'sine',.025); burst(p.x,p.y,'#f7d66c',5); }
+        else {run.fuel=Math.min(run.maxFuel,run.fuel+run.maxFuel*.35);run.emptyTime=0;tone(450,.17,'triangle',.06);addFloater('+35% FUEL',p.x,p.y+25,'#f9f4d5');burst(p.x,p.y,'#e88453',11);}
+      }
+    }
+    const marker=Math.floor(run.distance/100);
+    if(marker>run.milestone) {
+      const bonus=(marker-run.milestone)*20;run.milestone=marker;run.coins+=bonus;
+      flashMilestone(fmt(marker*100)+' m — keep it rolling','+'+bonus+' distance coins');
+      tone(880,.12);
+    }
+    if(!car.grounded) {
+      if(!run.wasAir){run.airTime=0;run.airRotation=0;}
+      run.airTime+=dt;run.airRotation+=car.angle-run.lastAngle;run.wasAir=true;
+    } else if(run.wasAir) {
+      if(run.airTime>.65 && !car.crashed) {
+        const flips=Math.floor((Math.abs(run.airRotation)+.25)/TAU);
+        const bonus=Math.floor(run.airTime*10)+flips*100;
+        run.coins+=bonus;
+        addFloater(flips?`${flips>1?flips+'× ':''}FLIP +${bonus}`:`AIR TIME +${bonus}`,car.x,car.y+100);
+        if(flips)flashMilestone('Clean flip!','+'+bonus+' coins');
+        tone(flips?1000:650,.1,'triangle');
+      }
+      if(run.airTime>.35 && !reducedMotion)shake=Math.min(4,car.impact*.01);
+      run.wasAir=false;run.airTime=0;
+    }
+    run.lastAngle=car.angle;
+    if(run.fuel<=0) {
+      run.emptyTime+=dt;
+      if(run.emptyTime>5 || (run.emptyTime>1.2 && Math.abs(car.vx)<18))return finish('fuel');
+    }
+    if(car.crashed)return finish('crash');
+    if(car.grounded && Math.abs(car.vx)>80 && run.time-lastDust>.045 && !reducedMotion) {
+      lastDust=run.time;const w=car.wheels[0];
+      particles.push({x:w.x-12,y:w.y-16,vx:-car.vx*.1,vy:14+hash(run.time)*32,life:.55,maxLife:.55,size:3+hash(run.time*2)*5,color:trail.grass,gravity:-10});
+    }
+    for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=p.gravity*dt;p.life-=dt;}
+    particles=particles.filter(p=>p.life>0).slice(-160);
+    for(const f of floaters){f.y+=35*dt;f.life-=dt;}
+    floaters=floaters.filter(f=>f.life>0);
+    shake=Math.max(0,shake-dt*10);
+  }
+  function updateHUD(force=false) {
+    if(!run)return;
+    if(!force && renderTime-lastHud<.08)return;
+    lastHud=renderTime;
+    $('distance').innerHTML=fmt(run.distance)+'<span>m</span>';
+    $('runCoins').textContent=fmt(run.coins);
+    const pct=Math.round(run.fuel/run.maxFuel*100);
+    $('fuelText').textContent=pct+'%';
+    $('fuelFill').style.transform='scaleX('+clamp(run.fuel/run.maxFuel,0,1)+')';
+    $('fuelFill').classList.toggle('low',pct<23);
+    $('fuelBar').setAttribute('aria-valuenow',String(pct));
+    $('speedNumber').textContent=Math.round(Math.abs(car.vx)*METERS_PER_PIXEL*3.6);
+    $('progressFill').style.width=(run.distance%100)+'%';
+  }
+
+  // Canvas drawing helpers. The illustration remains crisp at any screen
+  // size without stretching the physics world or changing its speed.
+  function path(points,fill,stroke,width=1) {
+    ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+    ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+  }
+  function roundRect(x,y,w,h,r,fill,stroke,width=1) {
+    ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+  }
+  function circle(x,y,r,fill,stroke,width=1) {
+    ctx.beginPath();ctx.arc(x,y,r,0,TAU);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+  }
+  function line(x1,y1,x2,y2,color,width=1) {
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
+  }
+  function sx(x){return(x-cam.x)*scale;}
+  function sy(y){return H*(mode==='menu'?.77:.68)-(y-cam.y)*scale;}
+
+  function drawSky() {
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,trail.sky[0]);g.addColorStop(1,trail.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    const sunX=W*.76-cam.x*.018, sunY=H*.23;
+    const glow=ctx.createRadialGradient(sunX,sunY,8,sunX,sunY,145);
+    glow.addColorStop(0,trail.sun+'70');glow.addColorStop(1,trail.sun+'00');ctx.fillStyle=glow;ctx.fillRect(sunX-150,sunY-150,300,300);
+    circle(sunX,sunY,trailId==='alpine'?26:32,trail.sun);
+    if(trailId==='alpine'){
+      ctx.globalAlpha=.5;for(let i=0;i<28;i++)circle(hash(i+5)*W,hash(i+20)*H*.38,hash(i+6)*1.1+.4,'#fbf9e6');ctx.globalAlpha=1;
+    }
+    ctx.globalAlpha=trailId==='alpine'?.18:.28;
+    for(let i=-1;i<6;i++){
+      const cx=i*270+hash(i+10)*70-((cam.x*.06)%270),cy=55+hash(i+81)*80;
+      ctx.fillStyle='#fffef1';ctx.beginPath();ctx.ellipse(cx,cy,48,6,0,0,TAU);ctx.ellipse(cx+38,cy+6,56,7,0,0,TAU);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    // Three parallax mountain ranges, with a consistent local seed.
+    for(let layer=0;layer<3;layer++) {
+      const factor=[.06,.12,.2][layer],baseline=H*[.60,.69,.78][layer];
+      const spacing=[190,170,150][layer],amplitude=[115,90,60][layer]*(H/500);
+      const offset=cam.x*factor, start=Math.floor(offset/spacing)-2;
+      const points=[[-100,H+20]];
+      for(let j=start;j<start+Math.ceil(W/spacing)+5;j++) {
+        const x=j*spacing-offset,peak=baseline-amplitude*(.5+hash(j+layer*50)*.75);
+        if(trailId==='canyon'){
+          points.push([x,baseline+hash(j)*20],[x+spacing*.24,peak+12],[x+spacing*.31,peak],[x+spacing*.62,peak],[x+spacing*.75,baseline-10]);
+        }else{
+          points.push([x,baseline],[x+spacing*.46,peak],[x+spacing,baseline+hash(j)*20]);
+        }
+      }
+      points.push([W+100,H+20]);path(points,trail.mountain[layer]);
+      if(trailId==='alpine'&&layer<2){
+        for(let j=start;j<start+Math.ceil(W/spacing)+5;j++){
+          const x=j*spacing-offset,peak=baseline-amplitude*(.5+hash(j+layer*50)*.75),px=x+spacing*.46;
+          path([[px,peak],[px+22,peak+28],[px+8,peak+22],[px+2,peak+29],[px-5,peak+21],[px-23,peak+29]],layer===0?'#d6e1db':'#c6d7d1');
+        }
+      }
+    }
+    // Soft distant treeline anchors the landscape in depth.
+    if(trailId!=='canyon'){
+      const offset=cam.x*.27;
+      for(let i=Math.floor(offset/48)-1;i<Math.floor((offset+W)/48)+2;i++){
+        const x=i*48-offset,y=H*.78+Math.sin(i*.6)*13,h=22+hash(i+44)*35;
+        path([[x-12,y],[x,y-h],[x+12,y]],trail.mountain[2]);
+      }
+    }
+    // Small birds, purely decorative and motion-reduction aware.
+    ctx.strokeStyle=trail.tree;ctx.globalAlpha=.5;ctx.lineWidth=1.2;
+    for(let i=0;i<4;i++){
+      const x=W*.56+i*21-cam.x*.025,y=H*.23+i%2*10,wing=reducedMotion?3:Math.sin(renderTime*2+i)*2+3;
+      ctx.beginPath();ctx.moveTo(x-5,y-wing);ctx.quadraticCurveTo(x-2,y-2,x,y);ctx.quadraticCurveTo(x+2,y-2,x+5,y-wing);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function drawTree(x,y,size,seed) {
+    ctx.save();ctx.translate(x,y);ctx.scale(size,size);
+    if(trailId==='canyon'){
+      ctx.strokeStyle=trail.tree;ctx.lineWidth=7;ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-58);ctx.moveTo(0,-21);ctx.lineTo(-14,-21);ctx.lineTo(-14,-39);ctx.moveTo(0,-34);ctx.lineTo(13,-34);ctx.lineTo(13,-49);ctx.stroke();
+      line(1,-3,1,-52,trail.treeLight,1.5);
+    }else{
+      line(0,0,0,-57,trailId==='alpine'?'#395461':'#536147',5);
+      for(let k=0;k<3;k++){
+        const yy=-14-k*16,ww=25-k*5;
+        path([[-ww,yy],[0,yy-43],[ww,yy]],k%2?trail.treeLight:trail.tree);
+        if(trailId==='alpine')path([[-ww*.55,yy-19],[0,yy-43],[ww*.55,yy-19],[2,yy-26]],'#d6e2d7');
+      }
+    }
+    ctx.restore();
+  }
+  function drawScenery() {
+    const start=Math.floor((cam.x-150)/190),end=Math.ceil((cam.x+W/scale+150)/190);
+    for(let i=start;i<=end;i++) {
+      const x=i*190+hash(i+88)*95;
+      if(mode==='menu' && sx(x)<W*.43)continue;
+      if(Math.abs(x-160)<180)continue;
+      const y=terrain(x),size=(.55+hash(i+13)*.85)*scale;
+      if(hash(i+3)>.26)drawTree(sx(x),sy(y)+4,size,i);
+      else {
+        ctx.save();ctx.translate(sx(x),sy(y)+2);ctx.scale(scale,scale);
+        path([[-18,1],[-14,-10],[-3,-19],[12,-15],[20,-1]],trailId==='canyon'?'#96724f':'#7d8c6c');
+        path([[-14,-10],[-3,-19],[3,-9],[12,-15],[20,-1],[1,-3]],trailId==='canyon'?'#c29665':'#a3af85');ctx.restore();
+      }
+    }
+    // Trail posts every 100 meters; markings are distances in meters.
+    for(let i=Math.floor((cam.x-100)/1000);i<Math.ceil((cam.x+W/scale+100)/1000);i++){
+      if(i<1)continue;const x=i*1000+160,y=terrain(x);
+      ctx.save();ctx.translate(sx(x),sy(y));ctx.scale(scale,scale);
+      line(0,0,0,-64,'#6d7654',5);roundRect(-25,-70,50,22,3,'#f2e8be','#777b56',1);
+      ctx.fillStyle='#536447';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText((i*100)+' m',0,-55);ctx.restore();
+    }
+    // A starting flag makes the first stretch feel like a real trailhead.
+    if(sx(245)>-80&&sx(245)<W+80){
+      const x=sx(245),y=sy(terrain(245));line(x,y,x,y-94*scale,'#486650',3*scale);
+      path([[x,y-94*scale],[x+38*scale,y-87*scale],[x,y-76*scale]],'#e48658');
+    }
+  }
+  function drawGround() {
+    const step=10,start=cam.x-30,end=cam.x+(W+30)/scale,pts=[];
+    for(let x=start;x<=end+step;x+=step)pts.push([sx(x),sy(terrain(x))]);
+    ctx.beginPath();ctx.moveTo(pts[0][0],H+20);for(const p of pts)ctx.lineTo(...p);ctx.lineTo(W+30,H+20);ctx.closePath();
+    const grad=ctx.createLinearGradient(0,H*.55,0,H);grad.addColorStop(0,trail.ground);grad.addColorStop(1,trail.dirt);ctx.fillStyle=grad;ctx.fill();
+    ctx.save();ctx.clip();
+    // Subtle earth strata and stone flecks follow the trail, not the camera.
+    for(let layer=1;layer<=3;layer++){
+      ctx.beginPath();for(let i=0;i<pts.length;i++){const x=start+i*step,y=pts[i][1]+(36*layer+Math.sin(x/94+layer)*5)*scale;i?ctx.lineTo(pts[i][0],y):ctx.moveTo(pts[i][0],y);}
+      ctx.strokeStyle=layer%2?'#ffffff0a':'#0b271315';ctx.lineWidth=layer===1?9:4;ctx.stroke();
+    }
+    for(let i=Math.floor(start/30);i<=Math.ceil(end/30);i++){
+      const x=i*30+hash(i)*16,y=terrain(x)-(16+hash(i+99)*160);
+      ctx.fillStyle=hash(i+4)>.4?'#eff5bf1c':'#10251f30';ctx.beginPath();ctx.ellipse(sx(x),sy(y),(1.5+hash(i+1)*3)*scale,(1+hash(i+2)*2)*scale,hash(i)*2,0,TAU);ctx.fill();
+    }
+    ctx.restore();
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.strokeStyle=trail.grass;ctx.lineWidth=8*scale;ctx.lineJoin='round';ctx.stroke();
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]-2*scale):ctx.moveTo(p[0],p[1]-2*scale));ctx.strokeStyle=trailId==='alpine'?'#f3f2dc':'#d4d695';ctx.lineWidth=2*scale;ctx.stroke();
+    for(let i=Math.floor(start/39);i<Math.ceil(end/39);i++){
+      if(hash(i+32)<.48)continue;const x=i*39+hash(i)*10,y=terrain(x);
+      const px=sx(x),py=sy(y)-2;ctx.strokeStyle=trail.grass;ctx.lineWidth=1*scale;
+      ctx.beginPath();ctx.moveTo(px-3*scale,py);ctx.lineTo(px-5*scale,py-7*scale);ctx.moveTo(px,py);ctx.lineTo(px+1*scale,py-9*scale);ctx.moveTo(px+2*scale,py);ctx.lineTo(px+6*scale,py-5*scale);ctx.stroke();
+    }
+  }
+  function drawPickups() {
+    for(const p of pickups){
+      if(p.taken || sx(p.x)<-40 || sx(p.x)>W+40)continue;
+      const bob=reducedMotion?0:Math.sin(renderTime*2.5+p.seed)*2.5;
+      ctx.save();ctx.translate(sx(p.x),sy(p.y+bob));ctx.scale(scale,scale);
+      if(p.kind==='coin'){
+        const width=reducedMotion?1:.78+Math.sin(renderTime*1.6+p.seed*.5)*.22;
+        ctx.scale(width,1);circle(0,1,11,'#ac8832');circle(0,-1,10,'#f7d467','#b58a32',1.3);circle(0,-1,7,null,'#ffe8a1',1.3);
+        ctx.fillStyle='#b38b32';ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.fillText('C',0,3);
+      }else{
+        // The filled outline and nozzle keep cans recognizable at mobile size.
+        roundRect(-13,-13,26,29,4,'#d96745','#8e4935',1.5);roundRect(-7,-20,13,8,2,'#a84f36');
+        line(6,-15,14,-21,'#8e4935',4);line(-7,-5,7,9,'#e99264',2);line(7,-5,-7,9,'#e99264',2);
+        path([[1,-9],[-5,0],[0,0],[-2,8],[6,-2],[1,-2]],'#ffdb91');
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawCar() {
+    const paint=PAINTS[save.paint];
+    // A soft shadow shrinks when the jeep is airborne.
+    const altitude=Math.max(0,car.y-terrain(car.x)-29),shadowAlpha=clamp(.2-altitude/750,.02,.2);
+    ctx.save();ctx.globalAlpha=shadowAlpha;ctx.fillStyle='#16372b';ctx.beginPath();ctx.ellipse(sx(car.x),sy(terrain(car.x))-1,61*scale/(1+altitude/250),7*scale,0,0,TAU);ctx.fill();ctx.restore();
+    // Draw suspension links in world space, behind the wheel and chassis.
+    const ca=Math.cos(car.angle),sa=Math.sin(car.angle);
+    for(let i=0;i<2;i++){
+      const ax=(i===0?-43:43),topX=car.x+ax*ca,topY=car.y+ax*sa,w=car.wheels[i];
+      line(sx(topX),sy(topY),sx(w.x),sy(w.y),'#2e453b',6*scale);
+      line(sx(topX)+2,sy(topY),sx(w.x)+2,sy(w.y),'#d8d1a7',2*scale);
+    }
+    ctx.save();ctx.translate(sx(car.x),sy(car.y));ctx.rotate(-car.angle);ctx.scale(scale,scale);
+    // Local canvas y is down, the inverse of the physics y convention.
+    // Rear-mounted spare, roll cage, and roof rack add a distinctive profile.
+    roundRect(-64,-14,12,31,5,'#263d37');line(-61,-9,-61,11,'#486055',3);
+    path([[-53,-8],[-43,-21],[-24,-21],[-18,-43],[13,-43],[29,-20],[49,-17],[60,-4],[59,10],[-55,10]],paint.dark,'#314b3d',1.5);
+    // Cabin windows and a warm little driver silhouette.
+    path([[-19,-39],[10,-39],[23,-20],[-22,-20]],'#bcd3be','#344e42',2);
+    path([[-16,-37],[-8,-37],[-13,-22],[-20,-22]],'#e6ead677');
+    line(-2,-40,-2,-20,'#395245',3);
+    roundRect(2,-24,12,10,3,'#536958');circle(8,-31,6,'#dec39b');
+    path([[2,-33],[3,-39],[12,-39],[15,-33]],'#314f43');
+    line(11,-22,21,-18,'#cfb58f',3);circle(24,-20,5,null,'#334b3e',2);
+    // Lower body, bonnet, window line, and wheel arches.
+    path([[-57,-17],[-27,-17],[-21,-13],[30,-13],[35,-20],[52,-15],[60,-5],[60,8],[-57,8]],paint.body);
+    path([[-54,-15],[-28,-15],[-21,-11],[31,-11],[36,-18],[49,-14],[52,-9],[-54,-8]],paint.light);
+    roundRect(-26,-11,48,20,3,paint.body,paint.dark,1.2);
+    line(-20,4,18,4,paint.dark,1);roundRect(8,-6,8,2,1,'#334f40');
+    roundRect(-53,5,107,6,2,'#374c3d');
+    // Small expedition decal.
+    circle(-11,-1,7,'#e6e3b8');path([[-16,2],[-12,-4],[-8,1],[-5,-2],[-2,3]],'#577053');
+    ctx.lineWidth=7;ctx.strokeStyle=paint.dark;
+    for(const x of [-43,43]){ctx.beginPath();ctx.arc(x,12,22,Math.PI,TAU);ctx.stroke();}
+    roundRect(53,-8,8,6,2,'#fff1be');roundRect(-59,-10,5,7,1,'#dfbd71');
+    roundRect(55,6,12,5,2,'#263e32');roundRect(-62,6,12,5,2,'#263e32');
+    // Roof rack and rolled-up camping blanket.
+    line(-23,-45,15,-45,'#365041',3);line(-18,-45,-18,-49,'#365041',2);line(10,-45,10,-49,'#365041',2);
+    roundRect(-19,-53,31,8,3,'#b9b38b','#747c5e',1);line(-12,-53,-12,-45,'#576c50',2);line(5,-53,5,-45,'#576c50',2);
+    ctx.restore();
+    // Tires use their actual suspended world positions. Spin follows speed.
+    for(const w of car.wheels){
+      ctx.save();ctx.translate(sx(w.x),sy(w.y));ctx.scale(scale,scale);
+      circle(0,1,20,'#21352f');circle(0,0,17,'#2c4036','#172b26',3);
+      ctx.rotate(car.wheelSpin);
+      for(let i=0;i<10;i++){ctx.rotate(TAU/10);line(0,-16,0,-19,'#5a6651',2.3);}
+      circle(0,0,11,'#aab49b','#52674f',2);circle(0,0,8,'#566f58');
+      for(let i=0;i<5;i++){const a=i*TAU/5;line(Math.cos(a)*3,Math.sin(a)*3,Math.cos(a)*8,Math.sin(a)*8,'#c5c6a6',2.8);}
+      circle(0,0,3,'#d7d5b4');ctx.restore();
+    }
+  }
+  function drawEffects() {
+    for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/p.maxLife)*.7;circle(sx(p.x),sy(p.y),p.size*scale,p.color);}
+    ctx.globalAlpha=1;
+    for(const f of floaters){ctx.save();ctx.globalAlpha=clamp(f.life*2,0,1);ctx.font='800 '+Math.max(11,14*scale)+'px Arial';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#244630';ctx.strokeText(f.text,sx(f.x),sy(f.y));ctx.fillStyle=f.color;ctx.fillText(f.text,sx(f.x),sy(f.y));ctx.restore();}
+  }
+  function render(dt) {
+    const menu=mode==='menu',targetX=car.x-W*(menu?.70:.29)/scale;
+    // A small forward look is useful at speed; the vertical camera softens
+    // terrain changes without taking control away from the physics.
+    const targetY=menu?terrain(car.x):car.y-37;
+    const cameraBlend=1-Math.exp(-dt*(menu?3:4));
+    cam.x=lerp(cam.x,targetX,mode==='paused'?0:cameraBlend);
+    cam.y=lerp(cam.y,targetY,mode==='paused'?0:cameraBlend);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.save();
+    if(shake>0&&mode==='running'&&!reducedMotion)ctx.translate(Math.sin(renderTime*65)*shake,Math.cos(renderTime*53)*shake*.5);
+    drawSky();drawScenery();drawGround();drawPickups();drawCar();drawEffects();ctx.restore();
+    updateHUD();updateAudio();
+  }
+  function resize() {
+    const rect=$('stage').getBoundingClientRect();W=rect.width;H=rect.height;
+    dpr=Math.min(window.devicePixelRatio||1,2);scale=clamp(W/1160,.65,1.16);
+    canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
+    if(car){cam.x=car.x-W*(mode==='menu'?.70:.29)/scale;cam.y=mode==='menu'?terrain(car.x):car.y-37;}
+  }
+  function frame(now) {
+    const dt=lastTime?Math.min((now-lastTime)/1000,.08):0;lastTime=now;
+    // Decorative motion freezes during a pause, just like the simulation.
+    if(mode==='running'||mode==='menu')renderTime+=dt;
+    if(mode==='running') {
+      accumulator=Math.min(accumulator+dt,.12);
+      while(accumulator>=FIXED_DT&&mode==='running'){update(FIXED_DT);accumulator-=FIXED_DT;}
+    }else accumulator=0;
+    render(dt);requestAnimationFrame(frame);
+  }
+
+  function toast(message) {
+    $('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2800);
+  }
+  function upgradeCost(key) {return Math.round(UPGRADE_INFO[key].base*Math.pow(1.65,save.upgrades[key]));}
+  function renderGarage() {
+    updateWallet();const grid=$('upgradeGrid');grid.replaceChildren();
+    for(const [key,info] of Object.entries(UPGRADE_INFO)){
+      const level=save.upgrades[key],cost=upgradeCost(key),card=document.createElement('div');card.className='upgrade-card';
+      card.innerHTML=`<div class="upgrade-top"><b>${info.label}</b><svg aria-hidden="true"><use href="#i-${info.icon}"/></svg></div><p>${info.text}</p><div class="level-bars" aria-label="Level ${level} of 5">${Array.from({length:5},(_,i)=>`<i class="${i<level?'filled':''}"></i>`).join('')}</div><button class="btn ${level<5&&save.bank>=cost?'btn-dark':''}" ${level>=5||save.bank<cost?'disabled':''} aria-label="${level>=5?info.label+' fully upgraded':'Upgrade '+info.label+' for '+cost+' coins'}"><span>${level>=5?'Fully upgraded':'Upgrade'}</span><span>${level>=5?'✓':fmt(cost)+' C'}</span></button><span class="level-label">LEVEL ${level} / 5</span>`;
+      card.querySelector('button').addEventListener('click',()=>{
+        if(save.upgrades[key]>=5||save.bank<upgradeCost(key))return;
+        save.bank-=upgradeCost(key);save.upgrades[key]++;persist();renderGarage();tone(620,.16,'triangle');toast(info.label+' upgraded to level '+save.upgrades[key]);
+      });grid.appendChild(card);
+    }
+    const paints=$('paintOptions');paints.replaceChildren();
+    PAINTS.forEach((paint,index)=>{
+      const button=document.createElement('button');button.className='paint-swatch';button.style.background=paint.body;
+      button.setAttribute('aria-label',paint.name+' paint');button.setAttribute('aria-pressed',String(save.paint===index));
+      button.addEventListener('click',()=>{save.paint=index;persist();renderGarage();});paints.appendChild(button);
+    });
+  }
+  function openDialog(id) {
+    if($(id).open)return;
+    dialogWasRunning=mode==='running';if(dialogWasRunning)pauseGame();
+    if(id==='garageDialog')renderGarage();
+    $(id).showModal();clearControls();
+  }
+  function selectTrail(id) {
+    if(!Object.hasOwn(TRAILS,id) || mode==='running'||mode==='paused')return;
+    settleRun();trailId=id;trail=TRAILS[id];save.trail=id;persist();
+    document.querySelectorAll('[data-trail]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.trail===id)));
+    $('trailName').textContent=trail.name;setMode('menu');newRun();
+  }
+  function focusTrap(e) {
+    if(e.key!=='Tab'||!(mode==='paused'||mode==='over'))return;
+    if($('garageDialog').open||$('helpDialog').open)return;
+    const panel=$(mode==='paused'?'pauseScreen':'resultScreen');
+    const focusables=[...panel.querySelectorAll('button:not(:disabled)')];
+    const first=focusables[0],last=focusables[focusables.length-1];
+    if(e.shiftKey&&(!panel.contains(document.activeElement)||document.activeElement===first)){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&(!panel.contains(document.activeElement)||document.activeElement===last)){e.preventDefault();first.focus();}
+  }
+  document.addEventListener('keydown',e=>{
+    focusTrap(e);
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if($('garageDialog').open||$('helpDialog').open)return;
+    if(e.target.matches('input,textarea,select,[contenteditable="true"]'))return;
+    const driving=['ArrowRight','ArrowLeft','KeyD','KeyA'].includes(e.code);
+    if(driving&&mode==='running'){e.preventDefault();heldKeys.add(e.code);paintPedals();return;}
+    if(e.repeat)return;
+    if((e.code==='KeyP'||e.code==='Escape')&&(mode==='running'||mode==='paused')){e.preventDefault();mode==='running'?pauseGame():resumeGame();}
+    else if(e.code==='KeyR'&&['running','paused','over'].includes(mode)){e.preventDefault();startRun();}
+    else if(e.code==='KeyM'){e.preventDefault();toggleSound();}
+    else if(e.code==='Enter'&&mode==='menu'&&!e.target.closest('button,a')){e.preventDefault();startRun();}
+  });
+  document.addEventListener('keyup',e=>{heldKeys.delete(e.code);paintPedals();});
+  window.addEventListener('blur',()=>{clearControls();pauseGame();});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){clearControls();pauseGame();persist();}
+    lastTime=0;accumulator=0;
+  });
+  window.addEventListener('pagehide',()=>{settleRun();persist();});
+  // If a page is restored from the back-forward cache, start at the trails
+  // rather than resuming a run whose rewards have already been banked.
+  window.addEventListener('pageshow',e=>{if(e.persisted){setMode('menu');newRun();}});
+  $('startBtn').addEventListener('click',startRun);$('retryBtn').addEventListener('click',startRun);
+  $('pauseRestartBtn').addEventListener('click',startRun);$('pauseBtn').addEventListener('click',pauseGame);
+  $('resumeBtn').addEventListener('click',resumeGame);$('pauseHomeBtn').addEventListener('click',goHome);
+  $('resultHomeBtn').addEventListener('click',goHome);
+  $('garageBtn').addEventListener('click',()=>openDialog('garageDialog'));
+  $('resultGarageBtn').addEventListener('click',()=>openDialog('garageDialog'));
+  $('helpBtn').addEventListener('click',()=>openDialog('helpDialog'));
+  $('soundBtn').addEventListener('click',toggleSound);
+  document.querySelectorAll('[data-trail]').forEach(b=>b.addEventListener('click',()=>selectTrail(b.dataset.trail)));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));
+  for(const id of ['garageDialog','helpDialog']){
+    $(id).addEventListener('close',()=>{clearControls();if(dialogWasRunning)toast('Game paused. Choose Keep riding when you’re ready.');dialogWasRunning=false;});
+    $(id).addEventListener('click',e=>{if(e.target===$(id)){const r=$(id).getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$(id).close();}});
+  }
+  $('fullscreenBtn').addEventListener('click',async()=>{
+    try{
+      if(document.fullscreenElement)await document.exitFullscreen();
+      else if($('stage').requestFullscreen)await $('stage').requestFullscreen();
+      else toast('Fullscreen isn’t available here. Try landscape orientation.');
+    }catch(_){toast('Fullscreen isn’t available in this browser view.');}
+  });
+  document.addEventListener('fullscreenchange',()=>{$('fullscreenBtn').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');resize();});
+  // File:// downloads do not need a second file; the current document is the
+  // full source. The hosted version also provides a clean, unchanged copy.
+  $('downloadLink').addEventListener('click',e=>{
+    if(location.protocol!=='file:')return;
+    e.preventDefault();
+    const source='<!doctype html>\n'+document.documentElement.outerHTML;
+    const blob=new Blob([source],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='Ridgeline_Hill_Climb.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  });
+  if('ResizeObserver' in window)new ResizeObserver(resize).observe($('stage'));else window.addEventListener('resize',resize);
+  resize();updateSoundButton();selectTrail(trailId);updateWallet();requestAnimationFrame(frame);
+
+  // A small read-only diagnostics hook is helpful when modifying this source.
+  // It exposes copies, never writable references to a running game.
+  Object.defineProperty(window,'Ridgeline',{value:Object.freeze({
+    snapshot:()=>({mode,trail:trailId,distance:run.distance,fuel:Math.round(run.fuel),coins:run.coins,bank:save.bank,best:save.best,upgrades:{...save.upgrades},car:{x:car.x,y:car.y,vx:car.vx,angle:car.angle,grounded:car.grounded,crashed:car.crashed}})
+  })});
+})();
+
+  </script>
+  <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(console.error)); }</script>
+</body>
+</html>
